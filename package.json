@@ -4,18 +4,19 @@
   "description": "begin",
   "main": "index.js",
   "scripts": {
+	"start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ththth0303/server-chat.git"
+    "url": "git+https://github.com/trongitnlu/chat-server-nodejs.git"
   },
-  "author": "thangnt",
+  "author": "Trongitnlu",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ththth0303/server-chat/issues"
+    "url": "https://github.com/trongitnlu/chat-server-nodejs/issues"
   },
-  "homepage": "https://github.com/ththth0303/server-chat#readme",
+  "homepage": "https://github.com/trongitnlu/chat-server-nodejs#readme",
   "dependencies": {
     "ejs": "^2.5.7",
     "express": "^4.15.4",
