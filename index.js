@@ -4,6 +4,7 @@ var app = express();
 var server = require('http').Server(app);
 var port = (process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 6969);
 var io = require('socket.io')(server);
+
 server.listen(port, () => console.log('Server running in port ' + port));
 
 io.on('connection', function(socket){
@@ -15,7 +16,8 @@ io.on('connection', function(socket){
   })
 
   socket.on('newMessage', data => {
-    io.sockets.emit('newMessage', {data: data, id: socket.id});
+	var date = new Date()
+    io.sockets.emit('newMessage', {data: data, id: socket.id, time: `${date.getHours()}:${date.getMinutes()}` });
     console.log(data);
   })
 
