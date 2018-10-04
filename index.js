@@ -17,6 +17,7 @@ io.on('connection', function (socket) {
 
 	socket.on('disconnect', function () {
 		userOnile.remove(socket.id);
+		userAwait.remove(socket.id)
 		console.log(socket.id + ': disconnected')
 		var idSocket = socket.id + "a"
 		io.sockets.emit(idSocket, true)
@@ -33,9 +34,14 @@ io.on('connection', function (socket) {
 			console.log("abc null ")
 		} else {
 			var room = user2
-			io.sockets.emit(user1, { myId: user1, guestId: user2, room: room })
-			io.sockets.emit(user2, { myId: user2, guestId: user1, room: room })
-			console.log(room)
+			try{
+				io.sockets.emit(user1, { myId: user1, guestId: user2, room: room })
+				io.sockets.emit(user2, { myId: user2, guestId: user1, room: room })
+			}catch(e){
+				console.log(e)
+
+			}
+			
 		}
 
 	})
