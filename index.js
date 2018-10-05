@@ -12,6 +12,7 @@ var maps = new Map()
 server.listen(port, () => console.log('Server running in port ' + port));
 
 io.on('connection', function (socket) {
+	var room = null
 	userOnile.push(socket.id)
 	// console.log(socket.id + ': connected');
 	console.log(userOnile);
@@ -19,6 +20,16 @@ io.on('connection', function (socket) {
 	maps.set(socket.id, color)
 
 	socket.emit('id', { user: socket.id, color: "#004085" });
+
+	socket.on('thoat', data => {
+		console.log(data)
+		try{
+			io.sockets.connected[data.guest].emit("thoat", true)
+			io.sockets.connected[data.user].emit("thoat", true)
+		}catch(e){
+			console.log(`Bugs Thoat: ${e}`)
+		}
+	})
 
 	socket.on('disconnect', function () {
 		userOnile.remove(socket.id); //Xóa user online
@@ -41,7 +52,7 @@ io.on('connection', function (socket) {
 		if (user2 == null) {
 			console.log("abc null ")
 		} else {
-			var room = user2
+			room = user2
 			try {
 				io.sockets.emit(user1, { myId: user1, guestId: user2, room: room })
 				io.sockets.emit(user2, { myId: user2, guestId: user1, room: room })
@@ -56,28 +67,33 @@ io.on('connection', function (socket) {
 
 	socket.on('newMessage', data => {
 		var date = new Date()
-		console.log(data);
 		try {
-			if (data.guest != null && data.isOneToOne) {
-				var dataSend = { data: data.message, id: socket.id, time: `${date.getHours()}:${date.getMinutes()}`, isGroup: false }
-				io.sockets.connected[data.user].emit("newMessage", { ...dataSend, color: maps.get(data.guest) })
-				io.sockets.connected[data.guest].emit("newMessage", { ...dataSend, color: maps.get(data.user) })
-			} else {
+			if (data.isGroup) {
 				var dataSend = { data: data.message, id: socket.id, time: `${date.getHours()}:${date.getMinutes()}`, isGroup: true, color: maps.get(socket.id) }
 				io.sockets.emit('newMessage', dataSend)
 			}
 
 		} catch (e) {
+			console.log(e)
+		}
+	})
+
+	socket.on('newMessageOneToOne', data => {
+		var date = new Date()
+		try {
+			if (data.guest != null && data.isOneToOne) {
+				var dataSend = { data: data.message, id: socket.id, time: `${date.getHours()}:${date.getMinutes()}`, isGroup: false }
+				io.sockets.connected[data.user].emit("newMessage", { ...dataSend, color: maps.get(data.guest) })
+				io.sockets.connected[data.guest].emit("newMessage", { ...dataSend, color: maps.get(data.user) })
+			}
+		} catch (e) {
 			userOnile.remove(data.guest); //Xóa user online
 			userAwait.remove(data.guest)  //Xóa user chờ kết nối
 			maps.delete(data.guest) //xóa color trong map
-
-			console.log(data.guest + ': disconnected')
 			var idSocket = data.guest + "a"
 			io.sockets.emit(idSocket, true)
 			console.log(idSocket)
 		}
-		//io.clients[sessionID].send()
 	})
 
 });
