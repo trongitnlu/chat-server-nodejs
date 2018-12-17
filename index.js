@@ -9,6 +9,24 @@ var userAwait = []
 var maps = new Map()
 
 
+var sql = require("mssql");
+
+// config for your database
+var config = {
+	user: 'mekong',
+	password: 'VaoDaTa@0908163436',
+	server: 'nguyenbacsang.com',
+	database: 'testthang'
+};
+
+sql.connect(config, function (err) {
+
+	if (err) console.log(err);
+
+
+})
+
+
 server.listen(port, () => console.log('Server running in port ' + port));
 
 io.on('connection', function (socket) {
@@ -23,10 +41,10 @@ io.on('connection', function (socket) {
 
 	socket.on('thoat', data => {
 		console.log(data)
-		try{
+		try {
 			io.sockets.connected[data.guest].emit("thoat", true)
 			io.sockets.connected[data.user].emit("thoat", true)
-		}catch(e){
+		} catch (e) {
 			console.log(`Bugs Thoat: ${e}`)
 		}
 	})
@@ -143,4 +161,158 @@ random_bg_color = () => {
 	var z = 88;
 	var bgColor = "hsl(" + x + "," + y + "%," + z + "%)";
 	return bgColor
+}
+//Database
+app.get('/api', (req, res) => {
+	// create Request object
+	var request = new sql.Request();
+
+	// query to the database and get the records
+	request.query('select * from vi3013', function (err, recordset) {
+
+		if (err) console.log(err)
+
+		// send records as a response
+		res.send(recordset);
+
+	})
+})
+
+//api CP NVL trực tiếp
+app.get('/api/cp-nvl', (req, res) => {
+	// create Request object
+	var request = new sql.Request();
+
+	// query to the database and get the records
+	request.query("Select * From tb3008 Where ExpenseID = 'COST001'", function (err, recordset) {
+
+		if (err) {
+			console.log(err)
+			res.send(new Status(true, err))
+		} else {
+			res.send(recordset.recordset);
+		}
+
+	})
+})
+
+//api CP NC trực tiếp
+app.get('/api/cp-nc', (req, res) => {
+	// create Request object
+	var request = new sql.Request();
+
+	// query to the database and get the records
+	request.query("Select * From tb3008 Where ExpenseID = 'COST002'", function (err, recordset) {
+
+		if (err) {
+			console.log(err)
+			res.send(new Status(true, err))
+		} else {
+			res.send(recordset.recordset);
+		}
+
+	})
+})
+
+//api CP SXC - 627
+app.get('/api/cp-sxc', (req, res) => {
+	// create Request object
+	var request = new sql.Request();
+
+	// query to the database and get the records
+	request.query("Select * From tb3008 Where ExpenseID = 'COST003'", function (err, recordset) {
+
+		if (err) {
+			console.log(err)
+			res.send(new Status(true, err))
+		} else {
+			res.send(recordset.recordset);
+		}
+
+	})
+})
+
+const DivisionID = 'HPCNB2015'
+
+//3) Theo sản phẩm: 
+app.get('/api/getngaythangnam', (req, res) => {
+	// create Request object
+	var request = new sql.Request();
+
+	// query to the database and get the records
+	request.query(`Select Distinct MonthYear , TranMonth , TranYear, DivisionID From vi0317 Where DivisionID ='${DivisionID}' ORDER BY TranYear DESC, TranMonth DESC`, function (err, recordset) {
+
+		if (err) {
+			console.log(err)
+			res.send(new Status(true, err))
+		} else {
+			res.send(recordset.recordset);
+		}
+
+	})
+})
+
+//3) Đối tượng tập hợp chi phí - Theo sản phẩm:  
+app.get('/api/filter-chiphi-theosanpham', (req, res) => {
+	const tuky = req.query.tuky
+
+	const denky = req.query.denky
+
+	// create Request object
+	var request = new sql.Request();
+
+
+	// query to the database and get the records
+	request.query(`Select *  From vi3013 Where not (((ToMonth+ToYear*100)<${tuky}) Or (${denky}<(FromMonth+FromYear*100)))  And IsForPeriodID = 0 Order by PeriodID `,
+		function (err, recordset) {
+
+			if (err) {
+				console.log(err)
+				res.send(new Status(true, err))
+			} else {
+				res.send(recordset.recordset);
+			}
+
+			// send records as a response
+
+		})
+})
+
+//2) phân loại chi phí theo tài khoản:  
+app.get('/api/filter-chiphi-theotaikhoan', (req, res) => {
+	// create Request object
+	const p_page_number = req.query.pageNumber
+	const p_size = req.query.size
+	
+	const qy = "Select  tb3009.ExpenseID, tb3009.MaterialTypeID, UserName as MaterialTypeName,tb3009.AccountID , ExpenseName From tb3009 Left Join tb3008  On tb3008.MaterialTypeID = tb3009.MaterialTypeID Inner join tb3030 on    tb3030.ExpenseID = tb3009.ExpenseID  left join tb0025 on tb0025.AccountID = tb3009.AccountID Where tb0025.IsNotShow = 0"
+	var request = new sql.Request();
+	request.input('p_page_number', sql.Int, p_page_number)
+	request.input('p_size', sql.Int, p_size)
+	request.input('sql_query', sql.NVarChar, qy)
+	request.output('p_sum_page', sql.Int)
+	request.output('p_sum_records', sql.Int)
+
+
+	request.execute('proc_paging_query', (err, result) => {
+		if(err){
+			console.log(err)
+			res.send(new Status(true, err))
+		}else{
+			console.log(result.recordsets.length) // count of recordsets returned by the procedure
+			console.log(result.recordsets[0].length) // count of rows contained in first recordset
+			console.log(result.recordset) // first recordset from result.recordsets
+			console.log(result.returnValue) // procedure return value
+			console.log(result.output) // key/value collection of output values
+			console.log(result.rowsAffected) // array of
+			res.send( {'data': result.recordset, ...result.output})
+		}
+	})
+
+})
+
+class Status {
+	constructor(error, message) {
+		this.error = error
+		this.message = message
+	}
 }
