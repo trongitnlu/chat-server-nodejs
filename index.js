@@ -26,8 +26,14 @@ sql.connect(config, function (err) {
 
 })
 
+// view engine setup
+app.set('views', __dirname + '/views')
+app.set('view engine', 'ejs')
+
 
 server.listen(port, () => console.log('Server running in port ' + port));
+
+const addressServer = server.address()
 
 io.on('connection', function (socket) {
 	var room = null
@@ -117,7 +123,7 @@ io.on('connection', function (socket) {
 });
 
 app.get('/', (req, res) => {
-	res.send("Home page. Server running okay.");
+	res.render('index.ejs', { ip_current: JSON.stringify(addressServer) })
 })
 
 
@@ -162,20 +168,22 @@ random_bg_color = () => {
 	var bgColor = "hsl(" + x + "," + y + "%," + z + "%)";
 	return bgColor
 }
+
+const data = [
+	{ name: 'Page 1: Phân loại chi phí theo tài khoản', link: 'api/filter-chiphi-theotaikhoan?pageNumber=1&size=10', error: '{error:boolean, message:string}', method: 'GET', note: 'pageNumber: Số trang cần tới ; size:Số dòng cần lấy' },
+	{ name: 'Page 2: CP NVL trực tiếp', link: 'api/cp-nvl', method: 'GET', error: '{error:boolean, message:string}' },
+	{ name: 'Page 2: CP NC trực tiếp', link: 'api/cp-nc', method: 'GET', error: '{error:boolean, message:string}' },
+	{ name: 'Page 2: CP SXC - 627', link: 'api/cp-sxc', method: 'GET', error: '{error:boolean, message:string}' },
+	{ name: 'Page 3: Lấy ngày tháng năm', link: 'api/getngaythangnam', method: 'GET', error: '{error:boolean, message:string}' },
+	{ name: 'Page 3: Lọc đối tượng tập hợp chi phí theo sản phẩm', link: 'api/filter-chiphi-theosanpham?tuky=201509&denky=201809', error: '{error:boolean, message:string}', method: 'GET', note: 'tuky, denky: Định dạng năm tháng' },
+
+
+
+]
 //Database
 app.get('/api', (req, res) => {
-	// create Request object
-	var request = new sql.Request();
-
-	// query to the database and get the records
-	request.query('select * from vi3013', function (err, recordset) {
-
-		if (err) console.log(err)
-
-		// send records as a response
-		res.send(recordset);
-
-	})
+	// res.render('index.ejs',{ ip_current: 'local_ip' })
+	res.render('table.ejs', { page_title: 'API', data: data, url: addressServer.host })
 })
 
 //api CP NVL trực tiếp
@@ -283,7 +291,7 @@ app.get('/api/filter-chiphi-theotaikhoan', (req, res) => {
 	// create Request object
 	const p_page_number = req.query.pageNumber
 	const p_size = req.query.size
-	
+
 	const qy = "Select  tb3009.ExpenseID, tb3009.MaterialTypeID, UserName as MaterialTypeName,tb3009.AccountID , ExpenseName From tb3009 Left Join tb3008  On tb3008.MaterialTypeID = tb3009.MaterialTypeID Inner join tb3030 on    tb3030.ExpenseID = tb3009.ExpenseID  left join tb0025 on tb0025.AccountID = tb3009.AccountID Where tb0025.IsNotShow = 0"
 	var request = new sql.Request();
 	request.input('p_page_number', sql.Int, p_page_number)
@@ -294,17 +302,17 @@ app.get('/api/filter-chiphi-theotaikhoan', (req, res) => {
 
 
 	request.execute('proc_paging_query', (err, result) => {
-		if(err){
+		if (err) {
 			console.log(err)
 			res.send(new Status(true, err))
-		}else{
+		} else {
 			console.log(result.recordsets.length) // count of recordsets returned by the procedure
 			console.log(result.recordsets[0].length) // count of rows contained in first recordset
 			console.log(result.recordset) // first recordset from result.recordsets
 			console.log(result.returnValue) // procedure return value
 			console.log(result.output) // key/value collection of output values
 			console.log(result.rowsAffected) // array of
-			res.send( {'data': result.recordset, ...result.output})
+			res.send({ 'data': result.recordset, ...result.output })
 		}
 	})
 
