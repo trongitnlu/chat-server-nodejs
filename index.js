@@ -20,9 +20,9 @@ var sql = require("mssql");
 
 // config for your database
 var config = {
-	user: 'mekong',
-	password: 'VaoDaTa@0908163436',
-	server: 'nguyenbacsang.com',
+	user: 'trong',
+	password: 'trong123456',
+	server: 'nguyenvantrong.com',
 	database: 'testthang'
 };
 
